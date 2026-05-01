@@ -1,0 +1,50 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - deploy
+
+permissions:
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          ref: deploy
+
+      - name: Set up python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Checkout assets
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: dist
+
+      - name: Clean up hidden directories
+        run: rm -rf .[^.]*
+        working-directory: dist
+
+      - name: Build manifest
+        run: python ../build_manifest.py fonts > fonts.manifest.json
+        working-directory: dist
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
